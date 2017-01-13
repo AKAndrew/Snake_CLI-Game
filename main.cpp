@@ -10,7 +10,7 @@ enum {none, up, down, right_, left_} moves;
 enum {faster, slower, doublePoints, extraPoints, decreaseSize} special;
 //enum {singlePlayer, versus, highScores, quit} menu;
 
-unsigned int width=25, height=36,cursor=12, score, scoreH, delay;
+unsigned int width=25, height=25,cursor=12, score, scoreH, delay;
 
 struct
 {
@@ -65,6 +65,18 @@ void startUp()
 
 void muv()
 {
+    int aux_X1 = snake.body.x[0], aux_Y1 = snake.body.y[0], aux_X2, aux_Y2;
+    snake.body.x[0] = snake.head.x;
+    snake.body.y[0] = snake.head.y;
+    for (int i = 1; i < snake.body.length; i++)
+    {
+        aux_X2 = snake.body.x[i];
+        aux_Y2 = snake.body.y[i];
+        snake.body.x[i] = aux_X1;
+        snake.body.y[i] = aux_Y1;
+        aux_X1 = aux_X2;
+        aux_Y1 = aux_Y2;
+    }
     switch(moves)
     {
     case up://up
@@ -253,13 +265,19 @@ void print()
                     else if(target.normal.y == x && target.normal.x == y) cout<<"~";
                     else if(target.special.y == x && target.special.x == y) cout<<"@";
                     else
-                        cout<<" ";
+                    {
+                        bool printed = false;
                         if(snake.body.length > 0)
                         {
-                        for(int part=0; part<snake.body.length; part++)
-                            if(snake.body.x[part] == y && snake.body.y[part] == x)
-                                cout<<"o";
+                            for(int part=0; part<snake.body.length; part++)
+                                if(snake.body.x[part] == y && snake.body.y[part] == x)
+                                {
+                                    cout<<"o";
+                                    printed=true;
+                                }
                         }
+                        if(!printed) cout<<" ";
+                    }
                     break;
                 }
         }
