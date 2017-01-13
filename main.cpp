@@ -17,6 +17,12 @@ enum {faster, slower, doublePoints, extraPoints, decreaseSize} special;
 unsigned int width=25, height=25,cursor=12, score, scoreH, delay, scores[11];
 char players[11][11];
 
+void initScores()
+{
+    for(int i=0; i<=10; i++)
+        scores[i]=NULL;
+}
+
 char playerName[11];
 
 struct
@@ -47,8 +53,33 @@ struct
     } body;
 } snake;
 bool printed;
+
+void sortScore()
+{
+    int i=0;
+    while(fin>>scores[i]>>players[i])
+        i++;
+    for(int j=1; j<i-1; j++)
+        for(int k=j+1; k<i; k++)
+            if(scores[j]<scores[k])
+            {
+                swap(scores[j], scores[k]);
+                swap(players[j], players[k]);
+            }
+}
+
+void chart()
+{
+    //sortScore();
+    int i=1;
+    while (fin >> scores[i] >> players[i])
+        i++;
+}
+
 void startUp()
 {
+    chart();
+
     delay = 50;
     srand(time(0));
     gameState = menu;
@@ -67,26 +98,8 @@ void startUp()
     snake.body.length=0;
 
     score=0;
-    scoreH=0;
+    scoreH=scores[0];
     printed=0;
-    strcpy(playerName, "Player");
-}
-
-void sortScore()
-{
-    int i=0;
-    while(fin>>scores[i]>>players[i])
-        i++;
-    int k;
-    for(int j=0; j<i; j++, k=j+1)
-        if(scores[j]<scores[k])
-        {
-            swap(scores[j], scores[k]);
-            swap(players[j], players[k]);
-        }
-    ofstream fout("ranking.txt");
-    for(int i=0; i<10; i++)
-        fout<<scores[i]<<" "<<players[i]<<endl;
 }
 
 void muv()
@@ -243,6 +256,8 @@ void keys()
                     break;
 
                 }
+            if(gameState == gameOver) gameState=menu;
+            if(gameState == quit) system("exit");
             break;
         }
     }
@@ -259,15 +274,7 @@ int length(unsigned int n)
     while (n);
     return x;
 }
-
-void chart()
-{
-    sortScore();
-    int i=1;
-    while (fin >> scores[i] >> players[i])
-        i++;
-}
-
+bool charted=0;
 void print()
 {
     ofstream fout;
@@ -315,6 +322,7 @@ void print()
                     else cout<<" ";
                     break;
                 case gaming:
+                    charted=0;
                     if(snake.head.y == x && snake.head.x == y) cout<<"O";
                     else if(target.normal.y == x && target.normal.x == y) cout<<"~";
                     else if(target.special.y == x && target.special.x == y) cout<<"@";
@@ -334,6 +342,7 @@ void print()
                     }
                     break;
                 case gameOver:
+                    snake.body.length=0;
                     if(x == 10 && y == 8)
                     {
                         cout<<"GAME OVER!";
@@ -341,6 +350,7 @@ void print()
                         if(!printed)
                         {
                             fout<<score<<" "<<playerName<<"\n";
+                            sortScore();
                             printed=1;
                         }
                     }
@@ -355,16 +365,20 @@ void print()
                         y+=strlen("High score: ")+length(scoreH)-1;
                     }
                     else cout<<" ";
+                    if(!charted){ chart(); charted=1;}
                     break;
                 case highScores:
+                    sortScore();
                     if(x==10 && y == 8){ cout<<"RANKINGS"; y+=strlen("RANKINGS")-1; }
                     else cout<<" ";
-                    for(int i=1; i<=10; i++)
-                        if(x==10+i && y == 1)
+                    for(int i=0; i<10; i++)
+                        if(x==11+i && y == 1)
                         {
-                            cout<<i<<": "<<scores[i]<<" by "<<players[i];
+                            if(scores[i]==NULL)break;
+                            cout<<i+1<<": "<<scores[i]<<" by "<<players[i];
                             y+=strlen(":  by ")+length(i)+length(scores[i])+strlen(players[i]);
                         }
+                    if(kbhit() && getch()==13) gameState=menu;
                     break;
                 case insertName:
                     if(x==10 && y == 5){ cout<<"Insert your name:"; y+=strlen("Insert your name:")-1; }
@@ -380,20 +394,17 @@ void print()
     if(gameState==gaming) cout<<playerName<<" score: "<<score<<endl<<"Special: "<<target.special.name<<", "<<10-(target.special.timer/1000)<<endl<<endl<<"Highest score: "<<scoreH;
 }
 
-
 int main()
 {
     ofstream fout;
     fout.open("ranking.txt", ios_base::app);
-
-    chart();
     startUp();
     while(1)
     {
         print();
         keys();
         muv();
-        Sleep(50);
+        Sleep(delay);
         system("cls");
     }
     return 0;
