@@ -5,12 +5,12 @@
 #include <ctime>
 
 using namespace std;
-enum {meniu, gaming} gameState;
+enum {menu, gaming} gameState;
 enum {none, up, down, right_, left_} moves;
 enum {faster, slower, doublePoints, extraPoints, decreaseSize} special;
 //enum {singlePlayer, versus, highScores, quit} menu;
 
-unsigned int width = 20, height = 32, cursor=12, score=0, scoreH=0, delay=200;
+unsigned int width=25, height=36,cursor=12, score, scoreH, delay;
 
 struct
 {
@@ -36,20 +36,22 @@ struct
     } head;
     struct
     {
-        unsigned int length, x, y;
+        unsigned int length, x[100], y[100];
     } body;
 } snake;
 
 void startUp()
 {
+    delay = 50;
     srand(time(0));
-    gameState = meniu;
+    gameState = menu;
     moves=none;
 
     target.special.x = rand()%(width-1) + 1;
     target.special.y = rand()%(height-1) + 1;
     target.special.running = 0;
     strcpy(target.special.name,"none");
+
     target.normal.x = rand()%(width-1) + 1;
     target.normal.y = rand()%(height-1) + 1;
 
@@ -94,60 +96,61 @@ void muv()
 
     if(snake.head.x == target.normal.x && snake.head.y == target.normal.y)
     {
-        if(target.special.dp) score+=20; else score+=10;
+        if(target.special.dp) score+=20;
+        else score+=10;
         target.normal.x = rand()%(width-1) + 1;
         target.normal.y = rand()%(height-1) + 1;
         snake.body.length++;
     }
+
     if(snake.head.x == target.special.x && snake.head.y == target.special.y)
     {
         srand(time(0));
         switch(rand()%5 + 1)
         {
         case faster:
-            delay=100;
             target.special.running = 1;
+            delay=30;
             strcpy(target.special.name,"faster");
-            target.special.timer = clock();
             break;
         case slower:
-            delay=500;
             target.special.running = 1;
+            delay=200;
             strcpy(target.special.name,"slower");
-            target.special.timer = clock();
             break;
         case doublePoints:
             target.special.running = 1;
             target.special.dp = 1;
             strcpy(target.special.name,"double points");
-            target.special.timer = clock();
             break;
         case extraPoints:
             target.special.running = 1;
             score+=50;
             strcpy(target.special.name,"extra points");
-            target.special.timer = clock();
             break;
         case decreaseSize:
             target.special.running = 1;
-            snake.body.length--;
+            if(snake.body.length > 0) snake.body.length--;
             strcpy(target.special.name,"size decreased");
-            target.special.timer = clock();
             break;
         }
     }
-    clock_t actualTime = clock();
-    clock_t timer = target.special.timer - actualTime;
-    if((timer / (double) CLOCKS_PER_SEC) > 10 && target.special.timer != 0)
+
+    if(target.special.running != 0)
     {
-        target.special.timer=0;
-        target.special.dp=0;
-        target.special.running=0;
-        strcpy(target.special.name,"none");
-        delay=200;
-        srand(time(0));
-        target.special.x = rand()%(width-1) + 1;
-        target.special.y = rand()%(height-1) + 1;
+        target.special.x=NULL;
+        target.special.y=NULL;
+        target.special.timer+=delay;
+        if(target.special.timer/1000 >= 10)
+        {
+            target.special.timer=0;
+            target.special.dp=0;
+            target.special.running=0;
+            strcpy(target.special.name,"none");
+            delay=50;
+            target.special.x = rand()%(width-1) + 1;
+            target.special.y = rand()%(height-1) + 1;
+        }
     }
 }
 
@@ -181,7 +184,7 @@ void keys()
             break;
 
         case 13:
-            if(gameState == meniu)
+            if(gameState == menu)
                 switch(cursor)
                 {
                 case 12: //single
@@ -203,17 +206,16 @@ void keys()
 
 void print()
 {
-    srand(time(0));
     for(int x=0; x<=width; x++)
     {
         for(int y=0; y<=height; y++)
         {
-            if((x == 0 || x == width) && (y >= 0 || y <= height)) cout<<"-";
+            if((x == 0 || x == width) && (y >= 0 || y <= height))cout<<"-";
             else if((x > 0 || x < width) && (y == 0 || y == height)) cout<<"|";
             else
                 switch(gameState)
                 {
-                case meniu:
+                case menu:
                     if( x == 10 && y == 15)
                     {
                         cout<<"MENU";
@@ -252,13 +254,20 @@ void print()
                     else if(target.special.y == x && target.special.x == y) cout<<"@";
                     else
                         cout<<" ";
+                        if(snake.body.length > 0)
+                        {
+                        for(int part=0; part<snake.body.length; part++)
+                            if(snake.body.x[part] == y && snake.body.y[part] == x)
+                                cout<<"o";
+                        }
                     break;
                 }
         }
         cout<<endl;
     }
-    if(gameState==gaming) cout<<"Your score: "<<score<<endl<<"Special: "<<target.special.name<<endl<<endl<<"Highest score: "<<scoreH;
+    if(gameState==gaming) cout<<"Your score: "<<score<<endl<<"Special: "<<target.special.name<<", "<<10-(target.special.timer/1000)<<endl<<endl<<"Highest score: "<<scoreH;
 }
+
 
 int main()
 {
@@ -268,7 +277,7 @@ int main()
         print();
         keys();
         muv();
-        Sleep(200);
+        Sleep(delay);
         system("cls");
     }
     return 0;
