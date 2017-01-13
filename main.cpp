@@ -47,9 +47,38 @@ void startUp()
     scoreH=0;
 }
 
-void muv(char m[4])
+void muv(unsigned int m)
 {
+    switch(m)
+    {
+    case 72://up
+        if(snake.head.y <= 1)
+            snake.head.y = height-1;
+        else
+            snake.head.y--;
+        break;
 
+    case 80://dn
+        if(snake.head.y >= height-1)
+            snake.head.y = 1;
+        else
+            snake.head.y++;
+        break;
+
+    case 77:
+        if(snake.head.x >= width-1)
+            snake.head.x = 1;
+        else
+            snake.head.x++;
+        break;
+
+    case 75:
+        if(snake.head.x <= 1)
+            snake.head.x = width-1;
+        else
+            snake.head.x--;
+        break;
+    }
 }
 
 void keyboard()
@@ -60,24 +89,24 @@ void keyboard()
         {
             case 72: //up
                 if(gameState == gaming)
-                    muv("up");
+                    muv(72);
                 else
                     cursor--;
                 break;
 
             case 80: //down
                 if(gameState == gaming)
-                    muv("down");
+                    muv(80);
                 else
                     cursor++;
                 break;
 
             case 77: //right
-                muv("right");
+                muv(77);
                 break;
 
             case 75: //left
-                muv("left");
+                muv(75);
                 break;
 
             case 13:
@@ -146,8 +175,13 @@ void print()
                     else cout<<" ";
                     break;
                 case gaming:
-                    //if(food.X == x && food.Y == y) cout<<"&";
-                    //if(snake.X == x && snake. Y == y) cout<<"O";
+                    if(snake.head.y == x && snake.head.x == y) cout<<"O";
+                    else
+                    if(target.normal.y == x && target.normal.x == y) cout<<"~";
+                    else
+                    if(target.special.y == x && target.special.x == y) cout<<"@";
+                    else
+                        cout<<" ";
                     break;
                 }
         }
