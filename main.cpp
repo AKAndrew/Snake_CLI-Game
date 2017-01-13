@@ -3,14 +3,22 @@
 #include <conio.h>
 #include <windows.h>
 #include <ctime>
+#include <fstream>
 
 using namespace std;
-enum {menu, gaming} gameState;
+
+ifstream fin("ranking.txt");
+ofstream fout("ranking.txt");
+
+enum {menu, gaming, gameOver, highScores, quit} gameState;
 enum {none, up, down, right_, left_} moves;
 enum {faster, slower, doublePoints, extraPoints, decreaseSize} special;
 //enum {singlePlayer, versus, highScores, quit} menu;
 
-unsigned int width=25, height=25,cursor=12, score, scoreH, delay;
+unsigned int width=25, height=25,cursor=12, score, scoreH, delay, scores[10];
+char players[10][10];
+
+char playerName[10];
 
 struct
 {
@@ -61,6 +69,12 @@ void startUp()
 
     score=0;
     scoreH=0;
+    strcpy(playerName, "Player");
+}
+
+void scoring()
+{
+
 }
 
 void muv()
@@ -105,6 +119,10 @@ void muv()
 
     if(snake.head.y < 1) snake.head.y = width-1;
     else if(snake.head.y >= width) snake.head.y = 1;
+
+    for(int i=0; i<snake.body.length; i++)
+        if(snake.head.x == snake.body.x[i] && snake.head.y == snake.body.y[i])
+            gameState=gameOver;
 
     if(snake.head.x == target.normal.x && snake.head.y == target.normal.y)
     {
@@ -206,13 +224,35 @@ void keys()
                     gameState=gaming;
                     break;
                 case 14: //highscore
+                    gameState=highScores;
                     break;
                 case 15: //quit
+                    gameState=quit;
                     break;
 
                 }
 
         }
+    }
+}
+
+int length(unsigned int n)
+{
+    int x=0;
+    do
+    {
+        ++x;
+        n /= 10;
+    }
+    while (n);
+    return x;
+}
+
+void chart()
+{
+    for(int i=0; i<10; i++){
+        fin>>scores[i];
+        fin>>players[i];
     }
 }
 
@@ -222,7 +262,7 @@ void print()
     {
         for(int y=0; y<=height; y++)
         {
-            if((x == 0 || x == width) && (y >= 0 || y <= height))cout<<"-";
+            if((x == 0 || x == width) && (y >= 0 || y <= height)) cout<<"-";
             else if((x > 0 || x < width) && (y == 0 || y == height)) cout<<"|";
             else
                 switch(gameState)
@@ -279,6 +319,34 @@ void print()
                         if(!printed) cout<<" ";
                     }
                     break;
+                case gameOver:
+                    if(x == 10 && y == 12)
+                    {
+                        cout<<"GAME OVER!";
+                        y+=strlen("GAME OVER!");
+                    }
+                    else if(x == 12 && y == 12)
+                    {
+                        cout<<"Your score: "<<score;
+                        y+=strlen("Your score: ")+length(score);
+                    }
+                    else if(x == 13 && y == 12)
+                    {
+                        cout<<"High score: "<<scoreH;
+                        y+=strlen("High score: ")+length(scoreH);
+                    }
+                case highScores:
+                    if(x==10 && y == 10){ cout<<"RANKINGS"; y+=strlen("RANKINGS")-1; }
+                    else cout<<" ";
+                    for(int i=1; i<=10; i++)
+                        if(x==10+i && y == 1)
+                        {
+                            cout<<i<<": "<<scores[i]<<" by"<<players[i];
+                            y+=strlen(":  by")+length(i)+length(scores[i])+strlen(players[i]);
+                        }
+
+                    break;
+
                 }
         }
         cout<<endl;
